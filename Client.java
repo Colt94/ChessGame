@@ -17,6 +17,9 @@ public class Client extends Board {
 	
 	public RemoteBoard board;
 	
+	public void setColor(int color) {
+		this.color = color;
+	}
 	
 	public Client(String userName, String ipAddress, int port) {
 		this.userName = userName;

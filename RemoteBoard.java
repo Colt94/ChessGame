@@ -158,6 +158,7 @@ public class RemoteBoard implements ActionListener {
 			}
 			count--;
 		}
+		
 	}
 
 	JPanel getBoard() {
@@ -242,7 +243,6 @@ public class RemoteBoard implements ActionListener {
 				String oldY = Integer.toString(prevJ);
 				String newX = Integer.toString(i);
 				String newY = Integer.toString(j);
-				System.out.print("TESTSTSTSTS");
 				String move = oldX + "," + oldY + "," + newX + "," + newY;
 				
 				
@@ -291,69 +291,17 @@ public class RemoteBoard implements ActionListener {
 				
 				client.ClientWrite(move);
 				
-	
-				String ok = "";
+
 				int data = 0;
-				try {
-					
-					//wait for comfirmation from server
-					//data = client.dataAvailable();
 				
-					//while(data == 0) {
-						//data = client.dataAvailable();
-					//}
-				
-					//wait for move from other player to be sent back
-					//data = client.dataAvailable();
-					/*
-					if(color == 0) {
-						WmoveSent = true;
-					}
-					else {
-						BmoveSent = true;
-					}
-					if (color == 0) {
-						WrequestMove = true;
-					}
-					else {
-						BrequestMove = true;
-					}
-					
-					*/
-					//while (data == 0) {
-						//data = client.dataAvailable();
-					//}
-					//waiting = true;
-					while(true){ //wait for ok from sever. This comfirms the other player received the move, and updated their board
-						data = client.dataAvailable();
-						if(data != 0){
-							String c = client.ClientRead();
-							if(c.compareTo("ok")== 0) {
-								break;
-							}
-						}
-					}
-					moves++;
-					//waiting = false;
-						
-					/*
-					moveBack = client.ClientRead();
-					String[] values = moveBack.split(",");
-					oldX = values[0];
-					oldY = values[1];
-					newX = values[2];
-					newY = values[3];
-					moveUnit(Integer.parseInt(oldX),Integer.parseInt(oldY));
-					mover.setUnits(units);
-					placeUnit(Integer.parseInt(newX), Integer.parseInt(newY));
-						*/
-					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-					
+				String c = client.ClientRead();
+				while(c.compareTo("ok")!= 0) {
+					c = client.ClientRead();
+				}
+				moves++;
 				
 				AI = 1;
+				
 			}
 			else {
 				placeUnit(prevI, prevJ);

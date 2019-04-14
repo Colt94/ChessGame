@@ -6,6 +6,8 @@ import java.awt.image.BufferedImage;
 import java.awt.image.ImageObserver;
 import java.io.*;
 import java.util.*;
+import java.lang.Thread.*;
+import java.net.ServerSocket;
 
 import javax.imageio.*;
 import javax.swing.*;
@@ -15,6 +17,11 @@ class MenuActionListener implements ActionListener {
 	JFrame frame;
 	menu Menu;
 	DisplayGraphics graphics;
+	ClientServerMenu csmenu;
+	Server srv = null;
+	Client c;
+	JTextField jf;
+	JPanel textfield;
 	
 	MenuActionListener(JFrame f, menu m, DisplayGraphics g) {
 		this.frame = f;
@@ -24,6 +31,8 @@ class MenuActionListener implements ActionListener {
 		Menu.b1.addActionListener(this);
 		Menu.b2.addActionListener(this);
 		Menu.b3.addActionListener(this);
+		
+		csmenu = new ClientServerMenu();
 	}
 	
 	//***This is where the chess game is executed****
@@ -46,30 +55,120 @@ class MenuActionListener implements ActionListener {
 	        //Only setVisible after everything has been added
 	        frame.setVisible(true);
 	        
-	        while(true){
+	        //while(true){
 	        	
-	        }
+	        //}
 			
 		}
 		else if (e.getActionCommand() == "2") {
-			frame.remove(Menu.menuscreen);
-			Scanner myObj = new Scanner(System.in);  // Create a Scanner object
-			System.out.println("Server(s) or Client(c)?");
-			Server srv = null;
 			
-			String play = myObj.nextLine();  // Read user input
+			frame.getContentPane();
+			frame.remove(Menu.menuscreen); 
+			frame.add(csmenu.menuscreen);
+			//frame.setContentPane(csmenu.menuscreen);
+			frame.revalidate();
+			//frame.repaint();
+			frame.setVisible(true);
+			
+			csmenu.b1.addActionListener(new ActionListener(){
 
-			System.out.print(play);
+				public void actionPerformed(ActionEvent arg0) {
+					srv = new Server(111, 2);
+					try {
+						srv.run();
+						//srv.ServerHandler();
+						(new Thread(new ServerHandler(srv))).start();
+					} catch (IOException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+					
+				}
+				
+			});
+			csmenu.b2.addActionListener(new ActionListener(){
+
+				public void actionPerformed(ActionEvent arg0) {
+					jf = new JTextField(30);
+					jf.setPreferredSize( new Dimension( 100, 50 ) );
+					//csmenu.menuscreen.add(jf);
+					frame.remove(csmenu.menuscreen);
+					textfield = new JPanel();
+					JLabel add = new JLabel("Enter IP address");
+					textfield.add(add);
+					textfield.add(jf);
+					//frame.add(jf);
+					frame.add(textfield);
+					frame.revalidate();
+					frame.setVisible(true);
+					
+					jf.addActionListener(new ActionListener(){
+
+						public void actionPerformed(ActionEvent arg0) {
+							String address = jf.getText();
+							c = new Client("",address,111);
+							try {
+								c.run();
+							} catch (IOException e1) {
+								// TODO Auto-generated catch block
+								e1.printStackTrace();
+							}
+							
+							int data = 0;
+							try {
+								data = c.dataAvailable();
+							} catch (IOException e1) {
+								// TODO Auto-generated catch block
+								e1.printStackTrace();
+							}
+							
+							while(data == 0) {
+								try {
+									data = c.dataAvailable();
+								} catch (IOException e1) {
+									// TODO Auto-generated catch block
+									e1.printStackTrace();
+								}
+							}
+							String color = c.ClientRead();
+							int colorInt = Integer.parseInt(color);
+							c.setColor(colorInt);
+							RemoteBoard brd = new RemoteBoard(colorInt,c);
+							
+							frame.remove(textfield);
+							frame.revalidate();
+							frame.add(brd.colordisplay);
+							frame.add(brd.checkDisplay);
+					        frame.add(brd.pane);
+					        frame.add(brd.activePlayer);
+					        frame.add(brd.capPane);
+					        frame.add(graphics);
+					        //frame.add(brd.colordisplay);
+					        frame.setVisible(true);
+					        
+					        c.ClientRead(); // block untill both players are connected
+					        		
+					        (new Thread(new HandleBoardState(brd,c))).start();
+						}		
+				});
+					//c = new Client("Client1", "127.0.0.1", 111);	
+				}
+			});
+			/*
+			String play = null; //= myObj.nextLine();  // Read user input
+
 			if (play.compareTo("s") == 0) {
 				srv = new Server(111, 2);
 				try {
 					srv.run();
-					srv.ServerHandler();
+					//srv.ServerHandler();
+					(new Thread(new ServerHandler(srv))).start();
 				} catch (IOException e1) {
 					// TODO Auto-generated catch block
 					e1.printStackTrace();
 				}
 			}
+			
 			else {
 				Client c = new Client("Client1", "127.0.0.1", 111);
 				try {
@@ -78,8 +177,6 @@ class MenuActionListener implements ActionListener {
 					// TODO Auto-generated catch block
 					e1.printStackTrace();
 				}
-				
-				//String color = c.ClientRead();
 				
 				int data = 0;
 				try {
@@ -99,7 +196,7 @@ class MenuActionListener implements ActionListener {
 				}
 				String color = c.ClientRead();
 				int colorInt = Integer.parseInt(color);
-				
+				c.setColor(colorInt);
 				RemoteBoard brd = new RemoteBoard(colorInt,c);
 				frame.add(brd.colordisplay);
 				frame.add(brd.checkDisplay);
@@ -110,29 +207,12 @@ class MenuActionListener implements ActionListener {
 		        //frame.add(brd.colordisplay);
 		        frame.setVisible(true);
 		        
-		        (new Thread(new player(brd,c))).start();
+		        c.ClientRead(); // block untill both players are connected
+		        		
+		        (new Thread(new HandleBoardState(brd,c))).start();
 			}
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			/*
-			ClientServerMenu scMenu = new ClientServerMenu();
-			frame.add(scMenu.menuscreen);
-			frame.setVisible(true);
-			
-			scMenu.b1.setAction(null ); {
-				
-			
-			};
-			//frame.add(Menu.menuscreen);
 			*/
+			
 		}
 		else if (e.getActionCommand() == "3") {
 			System.out.print("Closing..");
@@ -142,32 +222,95 @@ class MenuActionListener implements ActionListener {
 
 }
 
-class player implements Runnable {
+
+class ServerHandler implements Runnable {
+	
+	Server srv;
+	
+	public ServerHandler(Server srv) {
+		this.srv = srv;
+	}
+	
+	public void run() {
+		while(true) {
+		
+			try {
+				Thread.sleep(100);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			try {
+			int data1 = srv.in1.available();
+			int data2 = srv.in2.available();
+			if(data1 != 0) {
+				//String[] values = CSV.split(",");
+				System.out.print("Data read from client1\n");
+				String move1 = srv.in1.readUTF();
+				srv.out2.writeUTF(move1); //send move to other client
+				srv.out2.flush();
+				System.out.print("Client1 move sent to client2\n");
+				
+				String c = srv.in2.readUTF();
+			
+				System.out.print("Client2 comfirmed\n");
+				
+				srv.out1.writeUTF("ok"); //send ok back to calling client
+				srv.out1.flush();
+				System.out.print("Sent ok to client1\n");
+			}
+			
+			else if (data2 != 0) {
+				//String[] values = CSV.split(",");
+				String move2 = srv.in2.readUTF();
+				System.out.printf("Data read %s from client2\n", move2);
+				srv.out1.writeUTF(move2);
+				srv.out1.flush();
+				System.out.printf("%s sent to client1\n", move2);
+				
+				
+				String c = srv.in1.readUTF();
+				
+				System.out.print("Client1 comfirmed\n");
+				
+				srv.out2.writeUTF("ok");
+				srv.out2.flush();
+				System.out.print("Sent ok to Client2");
+			}
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+	}
+			
+}
+
+
+class HandleBoardState implements Runnable {
 
 	RemoteBoard brd;
 	Client client;
-	
-	public player(RemoteBoard brd, Client client) {
+
+	public HandleBoardState(RemoteBoard brd, Client client) {
 		this.brd = brd;
 		this.client = client;
 	}
 	public void run() {
 		while(true) {
-			
-			if(brd.moves % 2 != brd.color) {
-				int data = 0;
-				try {
-					data = client.dataAvailable();
-				
-				while(data == 0) {
-					data = client.dataAvailable();
-					
-				}
-			} catch (IOException e1) {
+			//System.out.print("f");
+			try {
+				Thread.sleep(100);
+			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
-				e1.printStackTrace();
+				e.printStackTrace();
 			}
+			if(brd.moves % 2 != client.color) {
+				
+				System.out.print("About to read move\n");
 				String move = client.ClientRead();
+				System.out.printf("%s Recieved\n", move);
 				if(move.length() > 2){
 					String[] values = move.split(",");
 					String oldX = values[0];
@@ -179,6 +322,7 @@ class player implements Runnable {
 					brd.placeUnit(Integer.parseInt(newX), Integer.parseInt(newY));
 				
 					brd.client.ClientWrite("confirm");
+					System.out.print("Confirm sent\n");
 					brd.moves++;
 					brd.updatePlayer();
 				}
