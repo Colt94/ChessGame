@@ -154,64 +154,6 @@ class MenuActionListener implements ActionListener {
 					//c = new Client("Client1", "127.0.0.1", 111);	
 				}
 			});
-			/*
-			String play = null; //= myObj.nextLine();  // Read user input
-
-			if (play.compareTo("s") == 0) {
-				srv = new Server(111, 2);
-				try {
-					srv.run();
-					//srv.ServerHandler();
-					(new Thread(new ServerHandler(srv))).start();
-				} catch (IOException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
-			}
-			
-			else {
-				Client c = new Client("Client1", "127.0.0.1", 111);
-				try {
-					c.run();
-				} catch (IOException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
-				
-				int data = 0;
-				try {
-					data = c.dataAvailable();
-				} catch (IOException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
-				
-				while(data == 0) {
-					try {
-						data = c.dataAvailable();
-					} catch (IOException e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
-					}
-				}
-				String color = c.ClientRead();
-				int colorInt = Integer.parseInt(color);
-				c.setColor(colorInt);
-				RemoteBoard brd = new RemoteBoard(colorInt,c);
-				frame.add(brd.colordisplay);
-				frame.add(brd.checkDisplay);
-		        frame.add(brd.pane);
-		        frame.add(brd.activePlayer);
-		        frame.add(brd.capPane);
-		        frame.add(graphics);
-		        //frame.add(brd.colordisplay);
-		        frame.setVisible(true);
-		        
-		        c.ClientRead(); // block untill both players are connected
-		        		
-		        (new Thread(new HandleBoardState(brd,c))).start();
-			}
-			*/
 			
 		}
 		else if (e.getActionCommand() == "3") {
