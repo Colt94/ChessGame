@@ -10,17 +10,19 @@ public class Client extends Board {
 	private String userName;
 	private String ipAddress;
 	private int port;
-	private Socket sock = null;
+	public Socket sock = null;
 	private DataInputStream in;
 	private DataOutputStream out;
+	int color;
 	
-	Board board;
+	public RemoteBoard board;
 	
 	
 	public Client(String userName, String ipAddress, int port) {
 		this.userName = userName;
 		this.ipAddress = ipAddress;
 		this.port = port;
+		//board = new RemoteBoard(color);
 	}
 	
 	public void run() throws IOException {
@@ -32,6 +34,10 @@ public class Client extends Board {
 			
 	}
 	
+	public int dataAvailable() throws IOException{
+		
+		return in.available();
+	}
 	
 	public String ClientRead() {
 		try {
@@ -46,6 +52,7 @@ public class Client extends Board {
 	public void ClientWrite(String move) {
 		try {
 			out.writeUTF(move);
+			out.flush();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

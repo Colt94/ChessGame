@@ -6,8 +6,8 @@ import java.nio.ByteBuffer;
 
 public class Server {
 
-	private ServerSocket srvSock;
-	private Socket sock1, sock2;
+	public ServerSocket srvSock = null;
+	private Socket sock1, sock2 = null;
 	
 	private int port;
 	int client1, client2;
@@ -18,8 +18,9 @@ public class Server {
 	private DataOutputStream out1, out2 = null;
 
 	String move1, move2;
-	Board board;
+	public Board board;
 	
+	BufferedReader br1;
 	
 	public Server(int port, int PlayerCount) {
 		
@@ -43,14 +44,25 @@ public class Server {
 			System.out.print("Waiting for two connections...\n");
 			Socket sock1 = srvSock.accept();
 			System.out.print("Client 1 connected\n");
-			Socket sock2 = srvSock.accept();
-			System.out.print("Client 2 connected\n");
+			
 			
 			in1 = new DataInputStream(new BufferedInputStream(sock1.getInputStream()));
 			out1 = new DataOutputStream(new BufferedOutputStream(sock1.getOutputStream()));
 			
+			//write player color to connected client1
+			out1.writeUTF("0");
+			out1.flush();
+			
+			
+			Socket sock2 = srvSock.accept();
+			System.out.print("Client 2 connected\n");
+		
 			in2 = new DataInputStream(new BufferedInputStream(sock2.getInputStream()));
 			out2 = new DataOutputStream(new BufferedOutputStream(sock2.getOutputStream()));
+			
+			//write player color to connected client2
+			out2.writeUTF("1");
+			out2.flush();
 			
 		}
 		else {
@@ -68,24 +80,71 @@ public class Server {
 		
 	}
 	
-	
-	public void ServerRead(int client) {
+	public void ServerHandler() throws IOException {
 		
-		if(client == 1) {
-			try {
-				move1 = in1.readUTF();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+		String comfirm = "";
+		while(true) {
+			//move1 = in1.readUTF();
+			//move2 = in2.readUTF();
+			int data1 = in1.available();
+			int data2 = in2.available();
+			if(data1 != 0) {
+				//String[] values = CSV.split(",");
+				String move1 = in1.readUTF();
+				out2.writeUTF(move1); //send move to other client
+				out2.flush();
+				//data2 = in2.available();
+				while(true){
+					data2 = in2.available();
+					if(data2 != 0){
+						String c = in2.readUTF();
+						if(c.compareTo("confirm")== 0) {
+							break;
+						}
+					}
+				}
+				
+				//while(comfirm.compareTo("comfirm") != 0) { // wait for other client to confirm move recieved
+					//comfirm = in2.readUTF();
+				//}
+				out1.writeUTF("ok"); //send ok back to calling client
+				out1.flush();
+			}
+			else if (data2 != 0) {
+				//String[] values = CSV.split(",");
+				String move2 = in2.readUTF();
+				out1.writeUTF(move2);
+				out1.flush();
+				
+				while(true){
+					data1 = in1.available();
+					if(data1 != 0){
+						String c = in1.readUTF();
+						if(c.compareTo("confirm")== 0) {
+							break;
+						}
+					}
+				}
+			
+				//while(comfirm.compareTo("comfirm") != 0) {
+					//comfirm = in1.readUTF();
+				//}
+				out2.writeUTF("ok");
+				out2.flush();
 			}
 		}
+	}
+	
+	
+	public void ServerRead(int client) throws IOException {
+	
+		if(client == 1) {
+		
+			move1 = in1.readUTF();
+			
+		}
 		else {
-			try {
-				move2 = in2.readUTF();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			move2 = in2.readUTF();
 		}
 		
 	}
