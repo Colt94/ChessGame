@@ -55,7 +55,7 @@ class MenuActionListener implements ActionListener {
 					// TODO Auto-generated method stub
 					
 					frame.remove(Dmenu.menuscreen);
-					Board brd = new Board(2);
+					Board brd = new Board(1,true);
 					
 					frame.add(brd.checkDisplay);
 			        frame.add(brd.pane);
@@ -76,7 +76,7 @@ class MenuActionListener implements ActionListener {
 					// TODO Auto-generated method stub
 					
 					frame.remove(Dmenu.menuscreen);
-					Board brd = new Board(3);
+					Board brd = new Board(1,true);
 					
 					frame.add(brd.checkDisplay);
 			        frame.add(brd.pane);
@@ -97,7 +97,7 @@ class MenuActionListener implements ActionListener {
 					// TODO Auto-generated method stub
 					
 					frame.remove(Dmenu.menuscreen);
-					Board brd = new Board(4);
+					Board brd = new Board(2,true);
 					
 					frame.add(brd.checkDisplay);
 			        frame.add(brd.pane);
@@ -182,6 +182,7 @@ class MenuActionListener implements ActionListener {
 							String color = c.ClientRead();
 							int colorInt = Integer.parseInt(color);
 							c.setColor(colorInt);
+							
 							RemoteBoard brd = new RemoteBoard(colorInt,c);
 							
 							frame.remove(textfield);

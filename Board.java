@@ -30,6 +30,7 @@ public class Board implements ActionListener{
 	JLabel Bcheck;
 	JPanel checkDisplay;
 	JLabel selfChecked;
+	JLabel checkLabel;
 	
 	//AI ai
 	int depth;
@@ -43,6 +44,7 @@ public class Board implements ActionListener{
 	
 	//AI turns
 	int AI = 0;
+	boolean activeAI = false;
 	
 	List<int[]> wSquares = new ArrayList<>();
 	List<int[]> BSquares = new ArrayList<>();
@@ -52,7 +54,7 @@ public class Board implements ActionListener{
 	int BlackIsCheck = 0;
 	
 	//check position
-	int[][] checkPos = new int[2][2];
+	int[] checkPos = new int[2];
 	
 	//AI position list
 	List<PositionPairs> AIarray = new ArrayList<PositionPairs>();
@@ -63,10 +65,19 @@ public class Board implements ActionListener{
 	int prevI;
 	int prevJ;
 	int moves = 0;
+	
+	//End game screen state
+	boolean parentBoard;
+	JPanel checkmatePanel;
+	JLabel checkmateText;
+	boolean gameEnd = false;
+	
 
 	//Constructor sets up initial board state and game screen
-	Board(int depth) {
+	Board(int depth, boolean _activeAI) {
 
+		activeAI = _activeAI;
+		
 		this.depth = depth;
 		bruce = new AI(depth, 1);
 		//Set up capture zone
@@ -86,7 +97,13 @@ public class Board implements ActionListener{
 		
 		//check indicator
 		checkDisplay = new JPanel();
-		checkDisplay.setBounds(700, 100, 100, 100);
+		checkDisplay.setBounds(650, 100, 200, 20);
+		checkLabel = new JLabel("");
+		checkDisplay.add(checkLabel);
+		checkmatePanel = new JPanel();
+		checkmatePanel.setBounds(200, 800, 200, 20);
+		checkmateText = new JLabel("");
+		checkmatePanel.add(checkmateText);
 		
 		//Spawn black pieces
 		units[0][0] = new Rook(1);
@@ -171,25 +188,41 @@ public class Board implements ActionListener{
 	}
 
 	void placeUnit(int i, int j) {
-		//This bit is for silly stuff
-		Timer timer = new Timer();
-		//timer.schedule(new Helper(), 800);
-
+		boolean unitCapped = false;
 		//Moves enemy unit to captured zone
 		if (units[i][j] != null) {
-		//	if(units[i][j].unitType == "K") {
-				
-			//}
-			//else {
 			units[i][j].captured = true;
 			captured[cappedUnits] = units[i][j];
 		    captureZone[cappedUnits].setIcon(squares[i][j].getIcon());
 			cappedUnits++;
+			unitCapped = true;
 		}
 
 		units[i][j] = mover;
 		squares[i][j].setIcon(units[i][j].img);
-		//squares[i][j].setIcon(new ImageIcon("capturesmall.gif"));
+		//Make sure player does not move own king into check
+		updateCheck();
+		if ((mover.color == 0 && WhiteIsCheck == 1) || (mover.color == 1 && BlackIsCheck == 1)) {
+			units[prevI][prevJ] = mover;
+			squares[prevI][prevJ].setIcon(mover.img);
+			
+			if (unitCapped) {
+				cappedUnits--;
+				units[i][j] = captured[cappedUnits];
+				units[i][j].captured = false;
+				squares[i][j].setIcon(captureZone[cappedUnits].getIcon());
+				captureZone[cappedUnits].setIcon(new ImageIcon("blank.png"));
+				captured[cappedUnits] = null;
+			}
+			else {
+				if (prevI != i || prevJ != j) {
+					units[i][j] = null;
+					squares[i][j].setIcon(new ImageIcon("blank.png"));
+				}
+			}
+		}
+		updateCheck();
+		
 		mover = null;
 	}
 
@@ -231,64 +264,15 @@ public class Board implements ActionListener{
 				//mover.clearMoves();
 				wSquares.clear();
 				BSquares.clear();
-				//check if the player's move puts them OUT OF check
-				if(moves % 2 == 0 && WhiteIsCheck == 1) {
-					int x = checkPos[0][0];
-					int y = checkPos[1][1];
-					if(!testCheck(x,y,1)) {
-						WhiteIsCheck = 0;
-						checkDisplay.setVisible(false);
-						checkDisplay.remove(Wcheck);
-						checkDisplay.revalidate();
-					}
+			
+				if (units[i][j] != null) {
+					units[i][j].isFirstTurn = false;
+					AI = 1;
+					moves++;
+					updatePlayer();
 				}
-				/*
-				else if(moves % 2 == 1 && BlackIsCheck == 1) {
-					int x = checkPos[0][0];
-					int y = checkPos[1][1];
-					if(!testCheck(x,y,0)) {
-						WhiteIsCheck = 0;
-						checkDisplay.setVisible(false);
-						checkDisplay.remove(Bcheck);
-						checkDisplay.revalidate();
-					}
-				}
-				*/
-				//check if move puts other player IN check
-				/*
-				if(moves % 2 == 0) {
-					if(testCheck(i,j,0)) {
-						System.out.print("CHECK");
-						Bcheck = new JLabel("BLACK IN CHECK");
-						checkDisplay.add(Bcheck);
-						checkDisplay.setVisible(true);
-						BlackIsCheck = 1;
-						checkPos[0][0] = i;
-						checkPos[1][1] = j;
-					}
-					
-				}
-				*/
-				/*
-				else {
-					if(testCheck(i,j,1)) {
-						System.out.print("CHECK");
-						Wcheck = new JLabel("WHITE IN CHECK");
-						checkDisplay.add(Wcheck);
-						checkDisplay.setVisible(true);
-						WhiteIsCheck = 1;
-						checkPos[0][0] = i;
-						checkPos[1][1] = j;
-					}
-				}
-				*/
-				
 				moving = false;
-				moves++;
-				updatePlayer();
-				units[i][j].isFirstTurn = false;
-				
-				AI = 1;
+
 			}
 			else {
 				placeUnit(prevI, prevJ);
@@ -303,11 +287,40 @@ public class Board implements ActionListener{
 				BSquares.clear();
 				moving = false;
 			}
+			
+			if (WhiteIsCheck == 1) {
+				if (checkCheckmate(0)) {
+					updateGameEnd(1);
+				}
+			}
+			if (BlackIsCheck == 1) {
+				if(checkCheckmate(1)) {
+					updateGameEnd(0);
+				}
+			}
 
 		}
-		if (AI == 1) {
+		if (AI == 1 && activeAI == true) {
 			generateMove();
 		}
+		
+		if (!gameEnd) {
+			updateCheck();
+			if (WhiteIsCheck == 1) {
+				checkLabel.setText("WHITE IS IN CHECK");
+				//System.out.println("White check");
+				
+			}
+			else if (BlackIsCheck == 1) {
+				checkLabel.setText("BLACK IS IN CHECK");
+				//System.out.println("Black check");
+			}
+			else if (BlackIsCheck == 0 && WhiteIsCheck == 0) {
+				checkLabel.setText("");
+				//System.out.println("Black uncheck");
+			}
+		}		
+		
 	}
 
 	public void updatePlayer() {
@@ -319,39 +332,103 @@ public class Board implements ActionListener{
 			}
 	}
 	
-	public boolean testCheck(int i, int j, int c) {
-		units[i][j].setAvailableMoves(j,i, moves);
-		for (int k = 0; k < units[i][j].possibleMoves.size(); k++) {
-			int y = units[i][j].possibleMoves.get(k)[0];
-			int x = units[i][j].possibleMoves.get(k)[1];
-			if(units[x][y] != null) {
-				if(units[x][y].unitType == "K" && units[x][y].color != c) {
-					return true;
+	public void updateGameEnd(int winner) {
+		if (winner == 1) {
+			//black wins
+		//	checkmateText.setText("White in checkmate, black wins");
+			System.out.println("Black wins");
+			checkLabel.setText("White in checkmate, black wins");
+		}
+		if (winner == 0) {
+			//white wins
+			//checkmateText.setText("Black in checkmate, white wins");
+			System.out.println("Black wins");
+			checkLabel.setText("Black in checkmate, white wins");
+		}
+		AI = 0;
+		gameEnd = true;
+	}
+	
+	public void updateCheck() {
+		WhiteIsCheck = 0;
+		BlackIsCheck = 0;
+		
+		ArrayList<Unit> allMoves = new ArrayList<Unit>();
+		for (int a = 0; a < 8; a++) {
+			for (int b = 0; b < 8; b++) {
+				if (units[a][b] != null) {
+					units[a][b].setUnits(units);
+					units[a][b].clearMoves();
+					units[a][b].setAvailableMoves(b, a, moves);
+					allMoves.add(units[a][b]);
 				}
 			}
 		}
-		return false;
+		
+		for (int w = 0; w < allMoves.size(); w++) {
+			for (int k = 0; k < allMoves.get(w).possibleMoves.size(); k++) {
+				int y = allMoves.get(w).possibleMoves.get(k)[0];
+				int x = allMoves.get(w).possibleMoves.get(k)[1];
+				if (units[x][y] != null) {
+					if (units[x][y].unitType == "K" && units[x][y].color != allMoves.get(w).color) {
+						if (units[x][y].color == 0) {
+							WhiteIsCheck = 1;
+						}
+						if (units[x][y].color == 1) {
+							BlackIsCheck = 1;
+						}
+					}
+				}
+			}
+		}	
 	}
 	
-	public boolean testCheckMate(int c) {
+	public boolean checkCheckmate(int kingColor) {
+		boolean checkmate = true;
 		
-		int i;
-		int j;
-		for(i=0; i < 8; i++) {
-			for (j=0; j < 8; j++) {
-				if (units[i][j].color == c) {
+		Board boardCopy = new Board(depth,false);
+		boardCopy.units = copyBoard(this.units);
+		boardCopy.moves = this.moves;
+		
+		
+		for (int i = 0; i < 8; i++) {
+			for (int j = 0; j < 8; j++) {
+				
+				if (boardCopy.units[i][j] != null) {
+					if (boardCopy.units[i][j].color == kingColor) {
+						Unit move = boardCopy.units[i][j];
+						move.clearMoves();
+						move.setAvailableMoves(j,  i,  moves);
 					
+						List<int[]> myMoves = move.possibleMoves;
+						for(int k = 0; k < myMoves.size(); k++) {
+							boardCopy.units = copyBoard(this.units);
+							boardCopy.moves = this.moves;
+							int x = myMoves.get(k)[1];
+							int y = myMoves.get(k)[0];
+							boardCopy.moveUnit(i,  j);
+							boardCopy.placeUnit(x,  y);
+							boardCopy.updateCheck();
+							if (kingColor == 0 && boardCopy.WhiteIsCheck == 0 && checkmate == true) {
+								checkmate = false;
+							}
+							if (kingColor == 1 && boardCopy.BlackIsCheck == 0 && checkmate == true) {
+								checkmate = false;
+							}
+						}
+					}
 				}
 			}
 		}
 		
-		return true;
-	}
-	
-	public boolean testOutofCheck(int i, int j, int c) {
+		if (checkmate) {
+			System.out.println(kingColor + " CHECKMATE");
+		}
+		else {
+			System.out.println(kingColor + " CHECK");
+		}
 		
-		
-		return true;
+		return checkmate;
 	}
 	
 	public void generateMove() {
@@ -370,17 +447,11 @@ public class Board implements ActionListener{
 					units[bruce.initPos[0]][bruce.initPos[1]] = null;
 					squares[bruce.initPos[0]][bruce.initPos[1]].setIcon(new ImageIcon("blank.png"));
 					
-					
-					//check if move gets player OUT OF check
-					if(moves % 2 == 1 && BlackIsCheck == 1) {
-						int x = checkPos[0][0];
-						int y = checkPos[1][1];
-						if(!testCheck(x,y,0)) {
-							WhiteIsCheck = 0;
-							checkDisplay.setVisible(false);
-							checkDisplay.remove(Bcheck);
-							checkDisplay.revalidate();
-						}
+					if (moves % 2 == 0) {
+						updateCheck();
+					}
+					else if (moves % 2 == 1) {
+						updateCheck();
 					}
 					
 					moves++;
@@ -411,5 +482,13 @@ public class Board implements ActionListener{
 		public void run() {
 			squares[prevI][prevJ].setIcon(units[prevI][prevJ].img);
 		}
+	}
+	
+	public Unit[][] copyBoard(Unit[][] in){
+		Unit[][] out = new Unit[8][];
+		for(int i = 0; i < 8; i++) {
+			out[i] = in[i].clone();
+		}
+		return out;
 	}
 }

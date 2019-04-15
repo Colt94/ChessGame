@@ -22,15 +22,14 @@ public class RemoteBoard implements ActionListener {
 	//Turn notification
 	JPanel activePlayer;
 	JLabel player;
-	JLabel Wcheck;
-	JLabel Bcheck;
+	JLabel checkLabel;
 	JPanel checkDisplay;
 	JLabel selfChecked;
 	
 	JPanel colordisplay;
 	JLabel yourColor;
 	
-	boolean waiting;
+	boolean unitPlace = false;
 	
 
 	List<int[]> wSquares = new ArrayList<>();
@@ -58,7 +57,7 @@ public class RemoteBoard implements ActionListener {
 	int BlackIsCheck = 0;
 	
 	//check position
-	int[][] checkPos = new int[2][2];
+	int[] checkPos = new int[2];
 	
 	//AI position list
 	List<PositionPairs> AIarray = new ArrayList<PositionPairs>();
@@ -70,6 +69,12 @@ public class RemoteBoard implements ActionListener {
 	int prevJ;
 	int moves = 0;
 
+	//End game screen state
+	boolean parentBoard;
+	JPanel checkmatePanel;
+	JLabel checkmateText;
+	boolean gameEnd = false;
+	
 	//Constructor sets up initial board state and game screen
 	RemoteBoard(int color, Client client) {
 
@@ -88,8 +93,18 @@ public class RemoteBoard implements ActionListener {
 		//Player indicator
 		player = new JLabel("White's Turn");
 		activePlayer = new JPanel();
-		activePlayer.setBounds(700, 50, 100, 100);
+		activePlayer.setBounds(700, 50, 100, 20);
 		activePlayer.add(player);
+		
+		//check indicator
+		checkDisplay = new JPanel();
+		checkDisplay.setBounds(650, 100, 200, 20);
+		checkLabel = new JLabel("");
+		checkDisplay.add(checkLabel);
+		checkmatePanel = new JPanel();
+		checkmatePanel.setBounds(200, 800, 200, 20);
+		checkmateText = new JLabel("");
+		checkmatePanel.add(checkmateText);
 		
 		if (color == 0) {
 			yourColor = new JLabel("Your color: White");
@@ -190,27 +205,44 @@ public class RemoteBoard implements ActionListener {
 	}
 
 	void placeUnit(int i, int j) {
-		//This bit is for silly stuff
-		Timer timer = new Timer();
-		//timer.schedule(new Helper(), 800);
-
-		//Moves enemy unit to captured zone
+		boolean unitCapped = false;
 		if (units[i][j] != null) {
-		//	if(units[i][j].unitType == "K") {
-				
-			//}
-			//else {
+			
 			units[i][j].captured = true;
 			captured[cappedUnits] = units[i][j];
 		    captureZone[cappedUnits].setIcon(squares[i][j].getIcon());
 			cappedUnits++;
+			unitCapped = true;
 		}
 
 		units[i][j] = mover;
 		squares[i][j].setIcon(units[i][j].img);
 		//squares[i][j].setIcon(new ImageIcon("capturesmall.gif"));
-		mover = null;
-	}
+		//Make sure player does not move own king into check
+		updateCheck();
+		if ((mover.color == 0 && WhiteIsCheck == 1) || (mover.color == 1 && BlackIsCheck == 1)) {
+			units[prevI][prevJ] = mover;
+			squares[prevI][prevJ].setIcon(mover.img);
+			
+			if (unitCapped) {
+				cappedUnits--;
+				units[i][j] = captured[cappedUnits];
+				units[i][j].captured = false;
+				squares[i][j].setIcon(captureZone[cappedUnits].getIcon());
+				captureZone[cappedUnits].setIcon(new ImageIcon("blank.png"));
+				captured[cappedUnits] = null;
+			}
+			else {
+				if (prevI != i || prevJ != j) {
+					units[i][j] = null;
+					squares[i][j].setIcon(new ImageIcon("blank.png"));
+					}
+				}
+			}
+			updateCheck();
+			
+			mover = null;
+}
 
 	//Prints button coordinates to console when clicked
 	public void actionPerformed(ActionEvent arg0) {
@@ -241,7 +273,6 @@ public class RemoteBoard implements ActionListener {
 			if ((units[i][j] == null || units[i][j].color != mover.color) && mover.checkMove(j, i)) {
 				
 				placeUnit(i, j);
-				
 				for (int m = 0; m < wSquares.size(); m++) {
 					squares[wSquares.get(m)[0]][wSquares.get(m)[1]].setBackground(Color.white);
 				}
@@ -252,81 +283,26 @@ public class RemoteBoard implements ActionListener {
 				wSquares.clear();
 				BSquares.clear();
 				
-				//check if the player's move puts them OUT OF check
-				if(moves % 2 == 0 && WhiteIsCheck == 1) {
-					int x = checkPos[0][0];
-					int y = checkPos[1][1];
-					if(!testCheck(x,y,1)) {
-						WhiteIsCheck = 0;
-						checkDisplay.setVisible(false);
-						checkDisplay.remove(Wcheck);
-						checkDisplay.revalidate();
-					}
-				}
-					//send move to server
+				//send move to server
 				String oldX = Integer.toString(prevI);
 				String oldY = Integer.toString(prevJ);
 				String newX = Integer.toString(i);
 				String newY = Integer.toString(j);
+				
 				String move = oldX + "," + oldY + "," + newX + "," + newY;
 				
-				
-				/*
-				else if(moves % 2 == 1 && BlackIsCheck == 1) {
-					int x = checkPos[0][0];
-					int y = checkPos[1][1];
-					if(!testCheck(x,y,0)) {
-						WhiteIsCheck = 0;
-						checkDisplay.setVisible(false);
-						checkDisplay.remove(Bcheck);
-						checkDisplay.revalidate();
-					}
-				}
-				*/
-				//check if move puts other player IN check
-				if(moves % 2 == 0) {
-					if(testCheck(i,j,0)) {
-						System.out.print("CHECK");
-						Bcheck = new JLabel("BLACK IN CHECK");
-						checkDisplay.add(Bcheck);
-						checkDisplay.setVisible(true);
-						BlackIsCheck = 1;
-						checkPos[0][0] = i;
-						checkPos[1][1] = j;
-					}
-				}
-				/*
-				else {
-					if(testCheck(i,j,1)) {
-						System.out.print("CHECK");
-						Wcheck = new JLabel("WHITE IN CHECK");
-						checkDisplay.add(Wcheck);
-						checkDisplay.setVisible(true);
-						WhiteIsCheck = 1;
-						checkPos[0][0] = i;
-						checkPos[1][1] = j;
-					}
-				}
-				*/
-				
 				moving = false;
-				//moves++;
-				updatePlayer();
-				units[i][j].isFirstTurn = false;
-				
-				client.ClientWrite(move);
-				
-
-				int data = 0;
-				
-				//waits for server to send back response. blocks till then.
-				String c = client.ClientRead();
-				while(c.compareTo("ok")!= 0) {
-					c = client.ClientRead();
+				if (units[i][j] != null) {
+					client.ClientWrite(move);
+					units[i][j].isFirstTurn = false;
+					String c = client.ClientRead();
+					while(c.compareTo("ok")!= 0) {
+						c = client.ClientRead();
+					}
+					moves++;
+					updatePlayer();
 				}
-				moves++;
 				
-				AI = 1;
 				
 			}
 			else {
@@ -342,10 +318,52 @@ public class RemoteBoard implements ActionListener {
 				BSquares.clear();
 				moving = false;
 			}
+				
+			if (WhiteIsCheck == 1) {
+				if (checkCheckmate(0)) {
+					updateGameEnd(1);
+				}
+			}
+			if (BlackIsCheck == 1) {
+				if(checkCheckmate(1)) {
+					updateGameEnd(0);
+				}
+			}
+				
+				
+				int data = 0;
+				
+				//waits for server to send back response. blocks till then.
+				//String c = client.ClientRead();
+				//while(c.compareTo("ok")!= 0) {
+					//c = client.ClientRead();
+				//}
+				//moves++;
+				
+				AI = 1;
+				
+			}
+			
 
-		}
+		//}
 		if (AI == 1) {
 			//generateMove();
+		}
+		if (!gameEnd) {
+			updateCheck();
+			if (WhiteIsCheck == 1) {
+				checkLabel.setText("WHITE IS IN CHECK");
+				//System.out.println("White check");
+				
+			}
+			else if (BlackIsCheck == 1) {
+				checkLabel.setText("BLACK IS IN CHECK");
+				//System.out.println("Black check");
+			}
+			else if (BlackIsCheck == 0 && WhiteIsCheck == 0) {
+				checkLabel.setText("dfkdfkjkdjfkdjkf");
+				//System.out.println("Black uncheck");
+			}
 		}
 	}
 
@@ -358,95 +376,107 @@ public class RemoteBoard implements ActionListener {
 			}
 	}
 	
-	public boolean testCheck(int i, int j, int c) {
-		units[i][j].setAvailableMoves(j,i, moves);
-		for (int k = 0; k < units[i][j].possibleMoves.size(); k++) {
-			int y = units[i][j].possibleMoves.get(k)[0];
-			int x = units[i][j].possibleMoves.get(k)[1];
-			if(units[x][y] != null) {
-				if(units[x][y].unitType == "K" && units[x][y].color != c) {
-					return true;
+	public void updateGameEnd(int winner) {
+		if (winner == 1) {
+			//black wins
+		//	checkmateText.setText("White in checkmate, black wins");
+			System.out.println("Black wins");
+			checkLabel.setText("White in checkmate, black wins");
+		}
+		if (winner == 0) {
+			//white wins
+			//checkmateText.setText("Black in checkmate, white wins");
+			System.out.println("Black wins");
+			checkLabel.setText("Black in checkmate, white wins");
+		}
+		AI = 0;
+		gameEnd = true;
+	}
+	
+	public void updateCheck() {
+		WhiteIsCheck = 0;
+		BlackIsCheck = 0;
+		
+		ArrayList<Unit> allMoves = new ArrayList<Unit>();
+		for (int a = 0; a < 8; a++) {
+			for (int b = 0; b < 8; b++) {
+				if (units[a][b] != null) {
+					units[a][b].setUnits(units);
+					units[a][b].clearMoves();
+					units[a][b].setAvailableMoves(b, a, moves);
+					allMoves.add(units[a][b]);
 				}
 			}
 		}
-		return false;
+		
+		for (int w = 0; w < allMoves.size(); w++) {
+			for (int k = 0; k < allMoves.get(w).possibleMoves.size(); k++) {
+				int y = allMoves.get(w).possibleMoves.get(k)[0];
+				int x = allMoves.get(w).possibleMoves.get(k)[1];
+				if (units[x][y] != null) {
+					if (units[x][y].unitType == "K" && units[x][y].color != allMoves.get(w).color) {
+						if (units[x][y].color == 0) {
+							WhiteIsCheck = 1;
+						}
+						if (units[x][y].color == 1) {
+							BlackIsCheck = 1;
+						}
+					}
+				}
+			}
+		}	
 	}
 	
-	public boolean testCheckMate(int c) {
+	public boolean checkCheckmate(int kingColor) {
+		boolean checkmate = true;
 		
-		int i;
-		int j;
-		for(i=0; i < 8; i++) {
-			for (j=0; j < 8; j++) {
-				if (units[i][j].color == c) {
+		Board boardCopy = new Board(0,false);
+		boardCopy.units = copyBoard(this.units);
+		boardCopy.moves = this.moves;
+		
+		
+		for (int i = 0; i < 8; i++) {
+			for (int j = 0; j < 8; j++) {
+				
+				if (boardCopy.units[i][j] != null) {
+					if (boardCopy.units[i][j].color == kingColor) {
+						Unit move = boardCopy.units[i][j];
+						move.clearMoves();
+						move.setAvailableMoves(j,  i,  moves);
 					
+						List<int[]> myMoves = move.possibleMoves;
+						for(int k = 0; k < myMoves.size(); k++) {
+							boardCopy.units = copyBoard(this.units);
+							boardCopy.moves = this.moves;
+							int x = myMoves.get(k)[1];
+							int y = myMoves.get(k)[0];
+							boardCopy.moveUnit(i,  j);
+							boardCopy.placeUnit(x,  y);
+							boardCopy.updateCheck();
+							if (kingColor == 0 && boardCopy.WhiteIsCheck == 0 && checkmate == true) {
+								checkmate = false;
+							}
+							if (kingColor == 1 && boardCopy.BlackIsCheck == 0 && checkmate == true) {
+								checkmate = false;
+							}
+						}
+					}
 				}
 			}
 		}
 		
-		return true;
-	}
-	
-	public boolean testOutofCheck(int i, int j, int c) {
+		if (checkmate) {
+			System.out.println(kingColor + " CHECKMATE");
+		}
+		else {
+			System.out.println(kingColor + " CHECK");
+		}
 		
-		
-		return true;
+		return checkmate;
 	}
 	
 	public void generateMove() {
-		//AI will choose a random move from a list of valid moves
-		/*
-		AIarray.clear();
-		//int moved = 0;
-		int i,j,i1,j1 = 0;
-		List<int[]> Moves;
-		//get all current piece positions for AI
-		//int index = 0;
-		for (int x = 0; x < 8; x++) {
-			for (int y = 0; y < 8; y++) {
-				if (units[x][y] != null && units[x][y].color == 1) {
-					PositionPairs p = new PositionPairs(x,y);
-					AIarray.add(p);
-					//AIarray.get(index).i = x;
-					//AIarray.get(index).j = y;
-					//index++;
-				}
-			}
-		}
-	
-		Random rand = new Random();
 		
-		// loops through all current AI positions and find a piece that has
-		// at least one move available 
-		for (int k = 0; k < AIarray.size(); k++) {
-			i = AIarray.get(k).i;
-			j = AIarray.get(k).j;
-			moveUnit(i,j);
-			mover.setUnits(units);
-			mover.setAvailableMoves(j,i, moves);
-			
-			Moves = mover.possibleMoves;
-		
-			System.out.printf("%s\n", mover.unitType);
-			System.out.printf("from (%d,%d) to ", i,j);
-			
-			if (Moves.size() > 0) {
-				
-				//Select random move
-				
-				//if 1 item we choose that item
-				if (Moves.size() - 1 == 0) {
-					j1 = Moves.get(0)[0];
-					i1 = Moves.get(0)[1];
-				}
-				//random chorice
-				else {
-					int randMove = rand.nextInt(Moves.size() - 1);
-					j1 = Moves.get(randMove)[0];
-					i1 = Moves.get(randMove)[1];
-				}
-				System.out.printf("(%d, %d)\n", i1, j1);
-			*/
 				bruce.setBoardState(units);
 				bruce.MiniMax(2, true);
 				
@@ -461,28 +491,6 @@ public class RemoteBoard implements ActionListener {
 					squares[bruce.initPos[0]][bruce.initPos[1]].setIcon(new ImageIcon("blank.png"));
 					
 					
-					//check if move gets player OUT OF check
-					if(moves % 2 == 1 && BlackIsCheck == 1) {
-						int x = checkPos[0][0];
-						int y = checkPos[1][1];
-						if(!testCheck(x,y,0)) {
-							WhiteIsCheck = 0;
-							checkDisplay.setVisible(false);
-							checkDisplay.remove(Bcheck);
-							checkDisplay.revalidate();
-						}
-					}
-					/*
-					if(testCheck(i1,j1,1)) {
-						System.out.print("CHECK");
-						Wcheck = new JLabel("WHITE IN CHECK");
-						checkDisplay.add(Wcheck);
-						checkDisplay.setVisible(true);
-						WhiteIsCheck = 1;
-						checkPos[0][0] = i;
-						checkPos[1][1] = j;
-					}
-					*/
 					moves++;
 					updatePlayer();
 					units[i1][j1].isFirstTurn = false;
@@ -511,5 +519,12 @@ public class RemoteBoard implements ActionListener {
 		public void run() {
 			squares[prevI][prevJ].setIcon(units[prevI][prevJ].img);
 		}
+	}
+	public Unit[][] copyBoard(Unit[][] in){
+		Unit[][] out = new Unit[8][];
+		for(int i = 0; i < 8; i++) {
+			out[i] = in[i].clone();
+		}
+		return out;
 	}
 }
