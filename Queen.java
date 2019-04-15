@@ -5,7 +5,7 @@ public class Queen extends Unit{
 
 	Queen(int _color){
 		unitType = "Q";
-		value = 4;
+		value = 50;
 		color = _color;
 		captured = false;
 		

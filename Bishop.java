@@ -5,7 +5,7 @@ public class Bishop extends Unit{
 
 	Bishop(int _color){
 		unitType = "B";
-		value = 2;
+		value = 10;
 		color = _color;
 		captured = false;
 		

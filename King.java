@@ -5,7 +5,7 @@ public class King extends Unit{
 
 	King(int _color){
 		unitType = "K";
-		value = 6;
+		value = 10000;
 		color = _color;
 		captured = false;
 		
@@ -27,7 +27,7 @@ public class King extends Unit{
 	{
 		int[] up = {currentX, currentY + 1};
 		int[] upLeft = {currentX - 1, currentY + 1};
-		int[] left = {currentX - 1, currentY + 1};
+		int[] left = {currentX - 1, currentY};
 		int[] leftDown = {currentX - 1, currentY - 1};
 		int[] down = {currentX, currentY - 1};
 		int[] downRight = {currentX + 1, currentY - 1};

@@ -35,7 +35,6 @@ public class Server {
 	public void run() throws IOException {
 		
 		srvSock = new ServerSocket(port);
-		
 		if (twoClients) {
 			System.out.print("Waiting for two connections...\n");
 			Socket sock1 = srvSock.accept();
@@ -76,50 +75,6 @@ public class Server {
 		System.out.print("WELCOME\n");
 		
 	}
-	/*
-	public void ServerHandler() throws IOException {
-		
-		String comfirm = "";
-		while(true) {
-		
-			int data1 = in1.available();
-			int data2 = in2.available();
-			if(data1 != 0) {
-				//String[] values = CSV.split(",");
-				System.out.print("Data read from client1\n");
-				String move1 = in1.readUTF();
-				out2.writeUTF(move1); //send move to other client
-				out2.flush();
-				System.out.print("Client1 move sent to client2\n");
-				
-				String c = in2.readUTF();
-			
-				System.out.print("Client2 comfirmed\n");
-				
-				out1.writeUTF("ok"); //send ok back to calling client
-				out1.flush();
-				System.out.print("Sent ok to client1\n");
-			}
-			else if (data2 != 0) {
-				//String[] values = CSV.split(",");
-				String move2 = in2.readUTF();
-				System.out.printf("Data read %s from client2\n", move2);
-				out1.writeUTF(move2);
-				out1.flush();
-				System.out.printf("%s sent to client1\n", move2);
-				
-				
-				String c = in1.readUTF();
-				
-				System.out.print("Client1 comfirmed\n");
-				
-				out2.writeUTF("ok");
-				out2.flush();
-				System.out.print("Sent ok to Client2");
-			}
-		}
-	}
-	*/
 	
 	public void ServerRead(int client) throws IOException {
 	

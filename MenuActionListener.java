@@ -18,6 +18,7 @@ class MenuActionListener implements ActionListener {
 	menu Menu;
 	DisplayGraphics graphics;
 	ClientServerMenu csmenu;
+	DifficultyMenu Dmenu;
 	Server srv = null;
 	Client c;
 	JTextField jf;
@@ -33,6 +34,7 @@ class MenuActionListener implements ActionListener {
 		Menu.b3.addActionListener(this);
 		
 		csmenu = new ClientServerMenu();
+		Dmenu = new DifficultyMenu();
 	}
 	
 	//***This is where the chess game is executed****
@@ -42,22 +44,72 @@ class MenuActionListener implements ActionListener {
 			//take menu off of frame
 			frame.remove(Menu.menuscreen);
 			
-			Board brd = new Board();
+			frame.add(Dmenu.menuscreen);
+			frame.revalidate();
+			frame.setVisible(true);
 			
-			 //JPanel must be added before DisplayGraphics
-			frame.add(brd.checkDisplay);
-	        frame.add(brd.pane);
-	        frame.add(brd.activePlayer);
-	        frame.add(brd.capPane);
-	        frame.add(graphics);
-	        
-	        
-	        //Only setVisible after everything has been added
-	        frame.setVisible(true);
-	        
-	        //while(true){
-	        	
-	        //}
+			Dmenu.b1.addActionListener(new ActionListener() {
+
+				@Override
+				public void actionPerformed(ActionEvent arg0) {
+					// TODO Auto-generated method stub
+					
+					frame.remove(Dmenu.menuscreen);
+					Board brd = new Board(2);
+					
+					frame.add(brd.checkDisplay);
+			        frame.add(brd.pane);
+			        frame.add(brd.activePlayer);
+			        frame.add(brd.capPane);
+			        frame.add(graphics);
+					
+			        frame.setVisible(true);
+				}
+				
+				
+			});
+			
+			Dmenu.b2.addActionListener(new ActionListener() {
+
+				@Override
+				public void actionPerformed(ActionEvent arg0) {
+					// TODO Auto-generated method stub
+					
+					frame.remove(Dmenu.menuscreen);
+					Board brd = new Board(3);
+					
+					frame.add(brd.checkDisplay);
+			        frame.add(brd.pane);
+			        frame.add(brd.activePlayer);
+			        frame.add(brd.capPane);
+			        frame.add(graphics);
+					
+			        frame.setVisible(true);
+				}
+				
+				
+			});
+			
+			Dmenu.b3.addActionListener(new ActionListener() {
+
+				@Override
+				public void actionPerformed(ActionEvent arg0) {
+					// TODO Auto-generated method stub
+					
+					frame.remove(Dmenu.menuscreen);
+					Board brd = new Board(4);
+					
+					frame.add(brd.checkDisplay);
+			        frame.add(brd.pane);
+			        frame.add(brd.activePlayer);
+			        frame.add(brd.capPane);
+			        frame.add(graphics);
+					
+			        frame.setVisible(true);
+				}
+				
+				
+			});
 			
 		}
 		else if (e.getActionCommand() == "2") {
@@ -65,9 +117,7 @@ class MenuActionListener implements ActionListener {
 			frame.getContentPane();
 			frame.remove(Menu.menuscreen); 
 			frame.add(csmenu.menuscreen);
-			//frame.setContentPane(csmenu.menuscreen);
 			frame.revalidate();
-			//frame.repaint();
 			frame.setVisible(true);
 			
 			csmenu.b1.addActionListener(new ActionListener(){
@@ -91,13 +141,12 @@ class MenuActionListener implements ActionListener {
 				public void actionPerformed(ActionEvent arg0) {
 					jf = new JTextField(30);
 					jf.setPreferredSize( new Dimension( 100, 50 ) );
-					//csmenu.menuscreen.add(jf);
 					frame.remove(csmenu.menuscreen);
 					textfield = new JPanel();
 					JLabel add = new JLabel("Enter IP address");
 					textfield.add(add);
 					textfield.add(jf);
-					//frame.add(jf);
+					
 					frame.add(textfield);
 					frame.revalidate();
 					frame.setVisible(true);
@@ -146,12 +195,13 @@ class MenuActionListener implements ActionListener {
 					        //frame.add(brd.colordisplay);
 					        frame.setVisible(true);
 					        
+					        System.out.print("Waiting on other player..\n");
 					        c.ClientRead(); // block untill both players are connected
 					        		
 					        (new Thread(new HandleBoardState(brd,c))).start();
 						}		
 				});
-					//c = new Client("Client1", "127.0.0.1", 111);	
+						
 				}
 			});
 			

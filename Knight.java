@@ -5,7 +5,7 @@ public class Knight extends Unit{
 
 	Knight(int _color){
 		unitType = "KN";
-		value = 3;
+		value = 10;
 		color = _color;
 		captured = false;
 		

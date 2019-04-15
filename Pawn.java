@@ -6,7 +6,7 @@ public class Pawn extends Unit{
 
 	Pawn(int _color) {
 		unitType = "P";
-		value = 1;
+		value = 4;
 		color = _color;
 		captured = false;
 
@@ -37,11 +37,11 @@ public class Pawn extends Unit{
 				int[] upLeft = {currentX - 1, currentY - 1};
 				int[] upRight = {currentX + 1, currentY - 1};
 
-				if(units[currentY - 1][currentX] == null && units[currentY - 2][currentX] == null)
+				if(onBoard(twoUp) && units[currentY - 1][currentX] == null && units[currentY - 2][currentX] == null)
 				{
 					possibleMoves.add(twoUp);
 				}
-				if(units[currentY - 1][currentX] == null)
+				if(onBoard(oneUp) && units[currentY - 1][currentX] == null)
 				{
 					possibleMoves.add(oneUp);
 				}
@@ -83,11 +83,11 @@ public class Pawn extends Unit{
 				int[] downLeft = {currentX - 1, currentY + 1};
 				int[] downRight = {currentX + 1, currentY + 1};
 
-				if(units[currentY + 1][currentX] == null && units[currentY + 2][currentX] == null)
+				if(onBoard(twoDown) && units[currentY + 1][currentX] == null && units[currentY + 2][currentX] == null)
 				{
 					possibleMoves.add(twoDown);
 				}
-				if(units[currentY + 1][currentX] == null)
+				if(onBoard(oneDown) && units[currentY + 1][currentX] == null)
 				{
 					possibleMoves.add(oneDown);
 				}

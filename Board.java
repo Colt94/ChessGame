@@ -32,6 +32,8 @@ public class Board implements ActionListener{
 	JLabel selfChecked;
 	
 	//AI ai
+	int depth;
+	AI bruce;
 
 	//Capture zone
 	Unit[] captured = new Unit[32];
@@ -41,8 +43,9 @@ public class Board implements ActionListener{
 	
 	//AI turns
 	int AI = 0;
-	AI bruce = new AI(2, 1);
 	
+	List<int[]> wSquares = new ArrayList<>();
+	List<int[]> BSquares = new ArrayList<>();
 	
 	//Ifcheck bits
 	int WhiteIsCheck = 0;
@@ -62,8 +65,10 @@ public class Board implements ActionListener{
 	int moves = 0;
 
 	//Constructor sets up initial board state and game screen
-	Board() {
+	Board(int depth) {
 
+		this.depth = depth;
+		bruce = new AI(depth, 1);
 		//Set up capture zone
 		capPane.setBounds(650, 200, 300, 600);
 		capPane.setLayout(new GridLayout(8, 4));
@@ -200,6 +205,15 @@ public class Board implements ActionListener{
 				moveUnit(i, j);
 				mover.setUnits(units);
 				mover.setAvailableMoves(j, i, moves);
+				for (int m = 0; m < mover.possibleMoves.size(); m++) {
+					if(squares[mover.possibleMoves.get(m)[1]][mover.possibleMoves.get(m)[0]].getBackground() == Color.WHITE) {
+						wSquares.add(new int[] {mover.possibleMoves.get(m)[1], mover.possibleMoves.get(m)[0]});
+					}
+					else if (squares[mover.possibleMoves.get(m)[1]][mover.possibleMoves.get(m)[0]].getBackground() == Color.BLACK){
+						BSquares.add(new int[] {mover.possibleMoves.get(m)[1], mover.possibleMoves.get(m)[0]});
+					}
+					squares[mover.possibleMoves.get(m)[1]][mover.possibleMoves.get(m)[0]].setBackground(Color.blue);
+				}
 			}
 		}
 		else if (moving) {
@@ -208,6 +222,15 @@ public class Board implements ActionListener{
 				
 				placeUnit(i, j);
 				
+				for (int m = 0; m < wSquares.size(); m++) {
+					squares[wSquares.get(m)[0]][wSquares.get(m)[1]].setBackground(Color.WHITE);
+				}
+				for (int m = 0; m < BSquares.size(); m++) {
+					squares[BSquares.get(m)[0]][BSquares.get(m)[1]].setBackground(Color.BLACK);
+				}
+				//mover.clearMoves();
+				wSquares.clear();
+				BSquares.clear();
 				//check if the player's move puts them OUT OF check
 				if(moves % 2 == 0 && WhiteIsCheck == 1) {
 					int x = checkPos[0][0];
@@ -232,6 +255,7 @@ public class Board implements ActionListener{
 				}
 				*/
 				//check if move puts other player IN check
+				/*
 				if(moves % 2 == 0) {
 					if(testCheck(i,j,0)) {
 						System.out.print("CHECK");
@@ -242,7 +266,9 @@ public class Board implements ActionListener{
 						checkPos[0][0] = i;
 						checkPos[1][1] = j;
 					}
+					
 				}
+				*/
 				/*
 				else {
 					if(testCheck(i,j,1)) {
@@ -266,6 +292,15 @@ public class Board implements ActionListener{
 			}
 			else {
 				placeUnit(prevI, prevJ);
+				for (int m = 0; m < wSquares.size(); m++) {
+					squares[wSquares.get(m)[0]][wSquares.get(m)[1]].setBackground(Color.WHITE);
+				}
+				for (int m = 0; m < BSquares.size(); m++) {
+					squares[BSquares.get(m)[0]][BSquares.get(m)[1]].setBackground(Color.BLACK);
+				}
+				//mover.clearMoves();
+				wSquares.clear();
+				BSquares.clear();
 				moving = false;
 			}
 
@@ -321,60 +356,9 @@ public class Board implements ActionListener{
 	
 	public void generateMove() {
 		//AI will choose a random move from a list of valid moves
-		/*
-		AIarray.clear();
-		//int moved = 0;
-		int i,j,i1,j1 = 0;
-		List<int[]> Moves;
-		//get all current piece positions for AI
-		//int index = 0;
-		for (int x = 0; x < 8; x++) {
-			for (int y = 0; y < 8; y++) {
-				if (units[x][y] != null && units[x][y].color == 1) {
-					PositionPairs p = new PositionPairs(x,y);
-					AIarray.add(p);
-					//AIarray.get(index).i = x;
-					//AIarray.get(index).j = y;
-					//index++;
-				}
-			}
-		}
-	
-		Random rand = new Random();
 		
-		// loops through all current AI positions and find a piece that has
-		// at least one move available 
-		for (int k = 0; k < AIarray.size(); k++) {
-			i = AIarray.get(k).i;
-			j = AIarray.get(k).j;
-			moveUnit(i,j);
-			mover.setUnits(units);
-			mover.setAvailableMoves(j,i, moves);
-			
-			Moves = mover.possibleMoves;
-		
-			System.out.printf("%s\n", mover.unitType);
-			System.out.printf("from (%d,%d) to ", i,j);
-			
-			if (Moves.size() > 0) {
-				
-				//Select random move
-				
-				//if 1 item we choose that item
-				if (Moves.size() - 1 == 0) {
-					j1 = Moves.get(0)[0];
-					i1 = Moves.get(0)[1];
-				}
-				//random chorice
-				else {
-					int randMove = rand.nextInt(Moves.size() - 1);
-					j1 = Moves.get(randMove)[0];
-					i1 = Moves.get(randMove)[1];
-				}
-				System.out.printf("(%d, %d)\n", i1, j1);
-			*/
 				bruce.setBoardState(units);
-				bruce.MiniMax(2, true);
+				bruce.MiniMax(depth, true);
 				
 				mover = units[bruce.initPos[0]][bruce.initPos[1]];
 				int i1 = bruce.megaMove[0];
@@ -398,17 +382,7 @@ public class Board implements ActionListener{
 							checkDisplay.revalidate();
 						}
 					}
-					/*
-					if(testCheck(i1,j1,1)) {
-						System.out.print("CHECK");
-						Wcheck = new JLabel("WHITE IN CHECK");
-						checkDisplay.add(Wcheck);
-						checkDisplay.setVisible(true);
-						WhiteIsCheck = 1;
-						checkPos[0][0] = i;
-						checkPos[1][1] = j;
-					}
-					*/
+					
 					moves++;
 					updatePlayer();
 					units[i1][j1].isFirstTurn = false;

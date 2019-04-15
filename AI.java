@@ -1,8 +1,6 @@
 package chessGame;
 
-import java.util.Arrays;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.lang.*;
 
 public class AI {
@@ -11,23 +9,23 @@ public class AI {
 	int color;
 	int realColor;
 	int [] bestMove;
-	int aiPrevIMax;
+	/*int aiPrevIMax;
 	int aiPrevJMax;
 	int aiPrevIMin;
 	int aiPrevJMin;
 	int movedIMax;
 	int movedJMax;
 	int movedIMin;
-	int movedJMin;
+	int movedJMin;*/
 	int megaMoveValue = -9999999;
 	int [] megaMove = new int[2];
 	int [] initPos = new int[2];
-	int numPossibleMovesMax;
-	int numPossibleMovesMin;
-	Unit mover;
-	Unit captured;
-	boolean maxWasCaptured = false;
-	boolean minWasCaptured = false;
+	//int numPossibleMovesMax;
+	//int numPossibleMovesMin;
+	//Unit aiMover;
+	Stack<Unit> captured = new Stack<Unit>();
+	//boolean maxWasCaptured = false;
+	//boolean minWasCaptured = false;
 	
 	Unit[][] boardstate = new Unit[8][8];
 	
@@ -48,8 +46,21 @@ public class AI {
 		boardstate = unitDeepCopy(state);
 	}
 	
+	public Unit[][] getBoardstate()
+	{
+		return boardstate;
+	}
+	
 	public int MiniMax(int dep, boolean maxPlayer) {
 		int value;
+		int aiPrevI;
+		int aiPrevJ;
+		int movedI;
+		int movedJ;
+		int numPossibleMoves;
+		Unit aiMover;
+		boolean wasCaptured = false;
+		
 		if (dep == 0)
 		{
 			if (depth % 2 == 0) {
@@ -71,45 +82,50 @@ public class AI {
 					{
 						if(boardstate[i][j].color == color)
 						{
+							setFirstTurn();
 							boardstate[i][j].setUnits(boardstate);
 							boardstate[i][j].setAvailableMoves(j, i, color);
-							setFirstTurn();
-							numPossibleMovesMax = boardstate[i][j].possibleMoves.size();
-							mover = boardstate[i][j];
-							for(int k = 0; k < numPossibleMovesMax; ++k)
+							numPossibleMoves = boardstate[i][j].possibleMoves.size();
+							aiMover = boardstate[i][j];
+							for(int k = 0; k < numPossibleMoves; ++k)
 							{
-								mover = boardstate[i][j];
-								aiPrevIMax = i;
-								aiPrevJMax = j;
-								movedIMax = mover.possibleMoves.get(k)[1];
-								movedJMax = mover.possibleMoves.get(k)[0];
-								if (boardstate[movedIMax][movedJMax] != null)
+								//System.out.println(numPossibleMoves);
+								setFirstTurn();
+								boardstate[i][j].setUnits(boardstate);
+								boardstate[i][j].setAvailableMoves(j, i, color);
+								//aiMover = boardstate[i][j];
+								aiPrevI = i;
+								aiPrevJ = j;
+								movedI = aiMover.possibleMoves.get(k)[1];
+								movedJ = aiMover.possibleMoves.get(k)[0];
+								if (boardstate[movedI][movedJ] != null)
 								{
-									maxWasCaptured = true;
+									wasCaptured = true;
 								}
-								aiPlace(movedIMax, movedJMax, aiPrevIMax, aiPrevJMax);
+								aiPlace(movedI, movedJ, aiPrevI, aiPrevJ, aiMover);
 								setFirstTurn();
 								value = Math.max(utilityFunction(color), MiniMax(dep - 1, false));
-								mover = boardstate[movedIMax][movedJMax];
-								if (value > megaMoveValue)
+								setFirstTurn();
+								aiMover = boardstate[movedI][movedJ];
+								if (value > megaMoveValue && dep == depth)
 								{
 									megaMoveValue = value;
-									megaMove[0] = mover.possibleMoves.get(k)[1];
-									megaMove[1] = mover.possibleMoves.get(k)[0];
-									initPos[0] = aiPrevIMax;
-									initPos[1] = aiPrevJMax;
+									megaMove[0] = movedI;
+									megaMove[1] = movedJ;
+									initPos[0] = aiPrevI;
+									initPos[1] = aiPrevJ;
 								}
-								aiPrevIMax = mover.possibleMoves.get(k)[1];
-								aiPrevJMax = mover.possibleMoves.get(k)[0];
-								aiPlace(i, j, aiPrevIMax, aiPrevJMax);
+								aiPrevI = movedI;
+								aiPrevJ = movedJ;
+								aiPlace(i, j, aiPrevI, aiPrevJ, aiMover);
 								setFirstTurn();
-								if (maxWasCaptured)
+								if (wasCaptured)
 								{
-									boardstate[aiPrevIMax][aiPrevJMax] = captured;
-									maxWasCaptured = false;
+									boardstate[aiPrevI][aiPrevJ] = captured.pop();
+									wasCaptured = false;
 								}
 							}
-							mover.possibleMoves.clear();
+							aiMover.possibleMoves.clear();
 						}
 					}
 				}
@@ -127,37 +143,41 @@ public class AI {
 					{
 						if(boardstate[i][j].color == realColor)
 						{
+							setFirstTurn();
 							boardstate[i][j].setUnits(boardstate);
 							boardstate[i][j].setAvailableMoves(j, i, realColor);
-							setFirstTurn();
-							numPossibleMovesMin = boardstate[i][j].possibleMoves.size();
-							mover = boardstate[i][j];
-							for(int k = 0; k < numPossibleMovesMin; ++k)
+							numPossibleMoves = boardstate[i][j].possibleMoves.size();
+							aiMover = boardstate[i][j];
+							for(int k = 0; k < numPossibleMoves; ++k)
 							{
-								mover = boardstate[i][j];
-								aiPrevIMin = i;
-								aiPrevJMin = j;
-								movedIMin = mover.possibleMoves.get(k)[1];
-								movedJMin = mover.possibleMoves.get(k)[0];
-								if (boardstate[movedIMin][movedJMin] != null)
+								setFirstTurn();
+								boardstate[i][j].setUnits(boardstate);
+								boardstate[i][j].setAvailableMoves(j, i, realColor);
+								//aiMover = boardstate[i][j];
+								aiPrevI = i;
+								aiPrevJ = j;
+								movedI = aiMover.possibleMoves.get(k)[1];
+								movedJ = aiMover.possibleMoves.get(k)[0];
+								if (boardstate[movedI][movedJ] != null)
 								{
-									minWasCaptured = true;
+									wasCaptured = true;
 								}
-								aiPlace(movedIMin, movedJMin, aiPrevIMin, aiPrevJMin);
+								aiPlace(movedI, movedJ, aiPrevI, aiPrevJ, aiMover);
 								setFirstTurn();
-								value = Math.min(utilityFunction(color), MiniMax(dep - 1, false));
-								mover = boardstate[movedIMin][movedJMin];
-								aiPrevIMin = mover.possibleMoves.get(k)[1];
-								aiPrevJMin = mover.possibleMoves.get(k)[0];
-								aiPlace(i, j, aiPrevIMin, aiPrevJMin);
+								value = Math.min(utilityFunction(color), MiniMax(dep - 1, true));
 								setFirstTurn();
-								if (minWasCaptured)
+								aiMover = boardstate[movedI][movedJ];
+								aiPrevI = movedI;
+								aiPrevJ = movedJ;
+								aiPlace(i, j, aiPrevI, aiPrevJ, aiMover);
+								setFirstTurn();
+								if (wasCaptured)
 								{
-									boardstate[aiPrevIMin][aiPrevJMin] = captured;
-									minWasCaptured = false;
+									boardstate[aiPrevI][aiPrevJ] = captured.pop();
+									wasCaptured = false;
 								}
 							}
-							mover.possibleMoves.clear();
+							aiMover.possibleMoves.clear();
 						}
 					}
 				}
@@ -174,18 +194,42 @@ public class AI {
 			for (int j = 0; j < 8; j++) {
 				if (boardstate[i][j] != null)
 				{
-					if(boardstate[i][j].color == c) {
+					if (boardstate[i][j].color == c) {
 						score = score + boardstate[i][j].value;
+						if (i == 1)
+						{
+							score = score + 1;
+						}
+						else if (i == 2)
+						{
+							score = score + 2;
+						}
+						else if (i == 3)
+						{
+							score = score + 3;
+						}
 					}
 					else
 					{
 						score = score - boardstate[i][j].value;
+						if (i == 6)
+						{
+							score = score - 1;
+						}
+						else if (i == 5)
+						{
+							score = score - 2;
+						}
+						else if (i == 4)
+						{
+							score = score - 3;
+						}
 					}
 				}
 			}
 			
 		}
-		return 0;
+		return score;
 	}
 	
 	void setFirstTurn()
@@ -220,11 +264,11 @@ public class AI {
 		}
 	}
 	
-	void aiPlace(int i, int j, int aiPrevI, int aiPrevJ) {
+	void aiPlace(int i, int j, int aiPrevI, int aiPrevJ, Unit aiMover) {
 		if (boardstate[i][j] != null) {
-			captured = boardstate[i][j];
+			captured.push(boardstate[i][j]);
 		}
-		boardstate[i][j] = mover;
+		boardstate[i][j] = aiMover;
 		boardstate[aiPrevI][aiPrevJ] = null;
 	}
 	

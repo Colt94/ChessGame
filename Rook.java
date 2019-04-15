@@ -5,7 +5,7 @@ public class Rook extends Unit {
 	
 	Rook(int _color){
 		unitType = "R";
-		int value = 3;
+		int value = 25;
 		color = _color;
 		captured = false;
 		

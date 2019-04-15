@@ -5,7 +5,7 @@ import java.net.*;
 
 
 
-public class Client extends Board {
+public class Client {
 
 	private String userName;
 	private String ipAddress;

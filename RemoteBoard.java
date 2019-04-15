@@ -32,6 +32,10 @@ public class RemoteBoard implements ActionListener {
 	
 	boolean waiting;
 	
+
+	List<int[]> wSquares = new ArrayList<>();
+	List<int[]> BSquares = new ArrayList<>();
+	
 	int color;
 	
 	//client object
@@ -94,7 +98,7 @@ public class RemoteBoard implements ActionListener {
 			yourColor = new JLabel("Your color: Black");
 		}
 		colordisplay = new JPanel();
-		colordisplay.setBounds(200, 900, 100, 100);
+		colordisplay.setBounds(200, 700, 100, 100);
 		colordisplay.add(yourColor);
 		colordisplay.setVisible(true);
 		
@@ -220,6 +224,16 @@ public class RemoteBoard implements ActionListener {
 				moveUnit(i, j);
 				mover.setUnits(units);
 				mover.setAvailableMoves(j, i, moves);
+				
+				for (int m = 0; m < mover.possibleMoves.size(); m++) {
+					if(squares[mover.possibleMoves.get(m)[1]][mover.possibleMoves.get(m)[0]].getBackground() == Color.WHITE) {
+						wSquares.add(new int[] {mover.possibleMoves.get(m)[1], mover.possibleMoves.get(m)[0]});
+					}
+					else if (squares[mover.possibleMoves.get(m)[1]][mover.possibleMoves.get(m)[0]].getBackground() == Color.BLACK){
+						BSquares.add(new int[] {mover.possibleMoves.get(m)[1], mover.possibleMoves.get(m)[0]});
+					}
+					squares[mover.possibleMoves.get(m)[1]][mover.possibleMoves.get(m)[0]].setBackground(Color.blue);
+				}
 			}
 		}
 		else if (moving) {
@@ -227,6 +241,17 @@ public class RemoteBoard implements ActionListener {
 			if ((units[i][j] == null || units[i][j].color != mover.color) && mover.checkMove(j, i)) {
 				
 				placeUnit(i, j);
+				
+				for (int m = 0; m < wSquares.size(); m++) {
+					squares[wSquares.get(m)[0]][wSquares.get(m)[1]].setBackground(Color.white);
+				}
+				for (int m = 0; m < BSquares.size(); m++) {
+					squares[BSquares.get(m)[0]][BSquares.get(m)[1]].setBackground(Color.black);
+				}
+				//mover.clearMoves();
+				wSquares.clear();
+				BSquares.clear();
+				
 				//check if the player's move puts them OUT OF check
 				if(moves % 2 == 0 && WhiteIsCheck == 1) {
 					int x = checkPos[0][0];
@@ -294,6 +319,7 @@ public class RemoteBoard implements ActionListener {
 
 				int data = 0;
 				
+				//waits for server to send back response. blocks till then.
 				String c = client.ClientRead();
 				while(c.compareTo("ok")!= 0) {
 					c = client.ClientRead();
@@ -305,6 +331,15 @@ public class RemoteBoard implements ActionListener {
 			}
 			else {
 				placeUnit(prevI, prevJ);
+				for (int m = 0; m < wSquares.size(); m++) {
+					squares[wSquares.get(m)[0]][wSquares.get(m)[1]].setBackground(Color.WHITE);
+				}
+				for (int m = 0; m < BSquares.size(); m++) {
+					squares[BSquares.get(m)[0]][BSquares.get(m)[1]].setBackground(Color.BLACK);
+				}
+				//mover.clearMoves();
+				wSquares.clear();
+				BSquares.clear();
 				moving = false;
 			}
 
